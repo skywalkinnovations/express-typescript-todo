@@ -1,10 +1,15 @@
+import * as express from "express";
+import * as core from "express-serve-static-core";
 import "reflect-metadata"; // this shim is required
-import {createExpressServer} from "routing-controllers";
-// import {UserController} from "./UserController";
+import { useExpressServer } from "routing-controllers";
+import { TodoController } from "./controllers";
 
+// import {UserController} from "./UserController";
+const app = express.default();
 // creates express app, registers all controller routes and returns you express app instance
-const app = createExpressServer({
-//    controllers: [UserController] // we specify controllers we want to use
+useExpressServer(app, {
+    controllers: [TodoController],  // we specify controllers we want to use
+    cors: false,
 });
 
 // run express application on port 3000
