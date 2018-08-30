@@ -1,0 +1,35 @@
+{
+  "name": "express-typescript-todo",
+  "version": "1.0.0",
+  "description": "A medium tutorial on how to create express application using typescript and webpack.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skywalkinnovations/express-typescript-todo.git"
+  },
+  "keywords": [
+    "typescript",
+    "expressjs",
+    "webpack",
+    "typestack"
+  ],
+  "author": "skywalkinnovations",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/skywalkinnovations/express-typescript-todo/issues"
+  },
+  "homepage": "https://github.com/skywalkinnovations/express-typescript-todo#readme",
+  "dependencies": {
+    "express": "^4.16.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.16.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3",
+    "webpack": "^4.17.1",
+    "webpack-cli": "^3.1.0"
+  }
+}
