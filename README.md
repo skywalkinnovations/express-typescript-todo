@@ -58,7 +58,7 @@ The function of each of these packages is as follows:
 Install the dev dependencies.
 
 ```bash
-npm install --save-dev @types/body-parser@1.17.0 @types/express@4.16.0 @types/multer@1.3.7 ts-loader@4.5.0 tslint@5.11.0 typescript@3.0.1 webpack@4.17.1 webpack-cli@3.1.0 nodemon-webpack-plugin@4.0.3 webpack-node-externals@1.7.2
+npm install -D @types/body-parser@1.17.0 @types/express@4.16.0 @types/multer@1.3.7 ts-loader@4.5.0 tslint@5.11.0 typescript@3.0.1 webpack@4.17.1 webpack-cli@3.1.0 nodemon-webpack-plugin@4.0.3 webpack-node-externals@1.7.2
 ```
 
 The function of each of these packages is as follows:
