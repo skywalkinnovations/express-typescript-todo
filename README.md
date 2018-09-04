@@ -176,12 +176,12 @@ export class TodoController {
     }
 
     @Post("/todo")
-    public post(@Body() user: any) {
+    public post(@Body() todo: any) {
        return "Saving todo...";
     }
 
     @Put("/todo/:id")
-    public put(@Param("id") id: number, @Body() user: any) {
+    public put(@Param("id") id: number, @Body() todo: any) {
        return "Updating a todo...";
     }
 
@@ -198,6 +198,7 @@ Create the barrel roll file src/application/controllers/index.ts with the conten
 
 ```typescript
 export * from "./todo.controller";
+
 ```
 
 Create the application bootstrapping file src/application/app.ts with the content:
@@ -233,5 +234,205 @@ npm run dev
 The application is accessible at http://localhost:3000/todo.
 
 ## Part 2
+
+Install the dependencies
+
+```bash
+npm install --save typedi
+```
+
+Install the dev dependencies
+
+```bash
+npm install @types/node -D
+```
+
+Create the services and models directory
+
+```bash
+cd src/application
+mkdir services
+mkdir models
+```
+
+Update the app file src/application/app.ts with the content:
+
+```typescript
+import "reflect-metadata";
+import { createExpressServer, useContainer } from "routing-controllers";
+import {Container} from "typedi";
+import { TodoController } from "./controllers";
+
+useContainer(Container);
+
+const app = createExpressServer({
+    controllers: [TodoController],
+    cors: false,
+});
+
+app.listen(3000);
+
+```
+
+Update the file tslint.json with the content:
+
+```json
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended"
+    ],
+    "jsRules": {},
+    "rules": {
+        "variable-name": [
+            true,
+            "check-format",
+            "allow-leading-underscore"
+        ]
+    },
+    "rulesDirectory": []
+}
+```
+
+Create the todo model file src/application/models/todo.model.ts with the content:
+
+```typescript
+export class TodoModel {
+    private _id: number;
+    private _name: string;
+    private _completed: boolean;
+
+    public get id(): number {
+        return this._id;
+    }
+    public set id(v: number) {
+        this._id = v;
+    }
+
+    public get name(): string {
+        return this._name;
+    }
+    public set name(v: string) {
+        this._name = v;
+    }
+
+    public get completed(): boolean {
+        return this._completed;
+    }
+    public set completed(v: boolean) {
+        this._completed = v;
+    }
+
+}
+
+```
+
+Create the barrel roll file src/application/models/index.ts with the content:
+
+```typescript
+export * from "./todo.model";
+
+```
+
+Create the todo service file src/application/services/todo.service.ts with the content:
+
+```typescript
+import { Service } from "typedi";
+import { TodoModel } from "../models";
+
+@Service()
+export class TodoService {
+    private _idCounter: number;
+    private _todos: TodoModel[];
+    constructor() {
+        this._todos = [];
+        this._idCounter = 0;
+    }
+
+    public getAll(): TodoModel[] {
+        return this._todos;
+    }
+
+    public getOne(id: number): TodoModel {
+        return this._todos.find((todo) => todo.id === id);
+    }
+
+    public create(todo: TodoModel): void {
+        todo.id = this.generateId();
+        this._todos.push(todo);
+    }
+
+    public update(id: number, todo: TodoModel): void {
+        const previousVersion = this.getOne(id);
+        previousVersion.completed = todo.completed;
+        previousVersion.id = todo.id;
+        previousVersion.name = todo.name;
+    }
+
+    public delete(id: number): void {
+        const index = this._todos.findIndex((todo) => todo.id === id);
+        this._todos.splice(index, 1);
+    }
+
+    private generateId(): number {
+        this._idCounter++;
+        return this._idCounter;
+    }
+}
+
+```
+
+Create the barrel roll file src/application/services/index.ts with the content:
+
+```typescript
+export * from "./todo.service";
+
+```
+
+Update the todo controller file src/application/controllers/todo.controller.ts with the content:
+
+```typescript
+import { Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put } from "routing-controllers";
+import { TodoModel } from "../models";
+import { TodoService } from "../services";
+
+@JsonController()
+export class TodoController {
+
+    constructor(private _todoService: TodoService) {
+
+    }
+
+    @Get("/todo")
+    public getAll(): TodoModel[] {
+        return this._todoService.getAll();
+    }
+
+    @Get("/todo/:id")
+    public getOne(@Param("id") id: number): TodoModel {
+        return this._todoService.getOne(id);
+    }
+
+    @OnUndefined(201)
+    @Post("/todo")
+    public post(@Body() todo: TodoModel) {
+        this._todoService.create(todo);
+    }
+
+    @OnUndefined(200)
+    @Put("/todo/:id")
+    public put(@Param("id") id: number, @Body() todo: TodoModel) {
+        this._todoService.update(id, todo);
+    }
+
+    @OnUndefined(204)
+    @Delete("/todo/:id")
+    public remove(@Param("id") id: number): void {
+        this._todoService.delete(id);
+    }
+
+}
+
+```
 
 ## Part 3
