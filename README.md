@@ -66,9 +66,11 @@ The function of each of these packages is as follows:
 * @types/*: provides the type definitions for a npm package
 * ts-loader: webpack typescript loader
 * tslint: typescript linter
-* typescript: a superset of javascript
+* typescript: a super set of javascript
 * webpack: a module bundler
-* 
+* webpack-cli: allows the running of webpack from terminal
+* nodemon-webpack-plugin: a webpack plugin to auto-restart a expressjs server with nodemon
+* webpack-node-externals: a function for webpack to filter out node_modules when bundling
 
 Create the Typescript configuration.
 
@@ -229,8 +231,6 @@ npm run dev
 ```
 
 The application is accessible at http://localhost:3000/todo.
-
-
 
 ## Part 2
 
