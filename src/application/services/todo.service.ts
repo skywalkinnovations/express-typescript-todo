@@ -1,7 +1,7 @@
 import { Service } from "typedi";
 import { TodoModel } from "../models";
 
-@Service()
+@Service("TodoService")
 export class TodoService {
     private _idCounter: number;
     private _todos: TodoModel[];
@@ -18,9 +18,10 @@ export class TodoService {
         return this._todos.find((todo) => todo.id === id);
     }
 
-    public create(todo: TodoModel): void {
+    public create(todo: TodoModel): TodoModel {
         todo.id = this.generateId();
         this._todos.push(todo);
+        return todo;
     }
 
     public update(id: number, todo: TodoModel): void {

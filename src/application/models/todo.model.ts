@@ -1,9 +1,20 @@
 import { Exclude, Expose } from "class-transformer";
+import { IsBoolean, IsEmpty, IsNotEmpty, IsString, MaxLength, MinLength } from "class-validator";
 
 @Exclude()
 export class TodoModel {
     private _id: number;
+    @IsNotEmpty({ message: "Name is required" })
+    @IsString({ message: "Name should be a string" })
+    @MinLength(1, {
+        message: "Name is too short"
+    })
+    @MaxLength(50, {
+        message: "Name is too long"
+    })
     private _name: string;
+    @IsNotEmpty({ message: "Completed is required" })
+    @IsBoolean({ message: "Completed should be boolean" })
     private _completed: boolean;
 
     @Expose()

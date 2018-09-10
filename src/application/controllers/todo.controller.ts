@@ -1,17 +1,19 @@
-import { TransformClassToPlain } from "class-transformer";
 import { Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put } from "routing-controllers";
+import Container, { Inject } from "typedi";
 import { TodoModel } from "../models";
 import { TodoService } from "../services";
 
 @JsonController()
 export class TodoController {
-
-    constructor(private _todoService: TodoService) {
-
+    private _todoService: TodoService;
+    // constructor(@Inject("TodoService") private _todoService: TodoService) {
+    constructor() {
+        this._todoService = Container.get<TodoService>("TodoService");
     }
 
     @Get("/todo")
     public getAll(): TodoModel[] {
+        console.log("Service: ", this._todoService);
         return this._todoService.getAll();
     }
 

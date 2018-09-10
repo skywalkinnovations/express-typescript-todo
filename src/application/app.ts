@@ -1,13 +1,20 @@
+import { Application } from "express";
 import "reflect-metadata";
 import { createExpressServer, useContainer } from "routing-controllers";
-import {Container} from "typedi";
+import { Container } from "typedi";
 import { TodoController } from "./controllers";
 
-useContainer(Container);
+export const bootstrapExpress = (): Application => {
+    useContainer(Container);
 
-const app = createExpressServer({
-    controllers: [TodoController],
-    cors: false,
-});
+    const app: Application = createExpressServer({
+        controllers: [TodoController],
+        cors: false,
+    });
 
-app.listen(3000);
+    console.log("Starting server");
+    // app.listen(3000);
+    // console.log("Listening on port 3000");
+    return app;
+};
+bootstrapExpress();
