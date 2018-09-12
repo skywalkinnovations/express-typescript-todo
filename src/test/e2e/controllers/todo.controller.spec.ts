@@ -1,63 +1,228 @@
-import { Application } from "express";
+import { expect } from "chai";
 import { before } from "mocha";
-import { useContainer } from "routing-controllers";
-import * as request from "supertest";
-import Container from "typedi";
-import { bootstrapExpress } from "../../../application";
-describe("TodoController", () => {
-    let app: Application;
-    before(() => {
-        // useContainer(Container);
-        app = bootstrapExpress();
+import * as agent from "supertest";
+import { TodoModel } from "../../../application";
+import { bootstrapApp, IBootstrapSettings } from "../utils";
+describe("TodoController", async () => {
+    let settings: IBootstrapSettings;
+    before(async () => {
+        settings = await bootstrapApp();
     });
     describe("getAll", () => {
         describe("with a populated list", async () => {
-            it("respond with json", (done) => {
-                request.default(app)
+            const expectedTodos: TodoModel[] = [];
+            let actualTodos: TodoModel[];
+            before(async () => {
+                const todos = [
+                    {
+                        completed: false,
+                        name: "Clean bathroom"
+                    } as TodoModel,
+                    {
+                        completed: false,
+                        name: "Clean kitchen"
+                    } as TodoModel,
+                ];
+                todos.forEach(async (todo) => {
+                    const response = await agent.default(settings.application)
+                        .post("/todo")
+                        .send(todo)
+                        .set("Accept", "application/json")
+                        .expect("Content-Type", /json/)
+                        .expect(200);
+                    expectedTodos.push(response.body as TodoModel);
+                });
+            });
+            after(async () => {
+                expectedTodos.forEach(async (todo) => {
+                    await agent.default(settings.application)
+                        .delete("/todo/" + todo.id)
+                        .set("Accept", "application/json")
+                        .expect(204);
+                });
+            });
+            it("responds with the expected records", async () => {
+                const response = await agent.default(settings.application)
                     .get("/todo")
                     .set("Accept", "application/json")
                     .expect("Content-Type", /json/)
-                    .expect(200, done);
+                    .expect(200);
+                actualTodos = response.body as TodoModel[];
+                for (let index = 0; index < expectedTodos.length; index++) {
+                    const expectedTodo = expectedTodos[index];
+                    const actualTodo = actualTodos[index];
+                    expect(expectedTodo.id).to.equal(actualTodo.id);
+                    expect(expectedTodo.name).to.equal(actualTodo.name);
+                    expect(expectedTodo.completed).to.equal(actualTodo.completed);
+                }
             });
-            // let sut: TodoService;
-            // let expectedTodos: TodoModel[];
-            // let actualTodos: TodoModel[];
-            // beforeEach(() => {
-            //     sut = new TodoService();
-            //     expectedTodos = [
-            //         {
-            //             completed: false,
-            //             name: "Clean bathroom"
-            //         } as TodoModel,
-            //         {
-            //             completed: false,
-            //             name: "Clean kitchen"
-            //         } as TodoModel,
-            //     ];
-            //     expectedTodos.forEach((todo) => sut.create(todo));
-            //     actualTodos = sut.getAll();
-            // });
-            // it("should match the length of the expected todos", () => {
-            //     expect(expectedTodos.length).to.equal(actualTodos.length);
-            // });
-            // it("should return todos in the same order as populated", () => {
-            //     for (let index = 0; index < expectedTodos.length; index++) {
-            //         const expectedTodo = expectedTodos[index];
-            //         const actualTodo = actualTodos[index];
-            //         expect(expectedTodo).to.equal(actualTodo);
-            //     }
-            // });
         });
-        // describe("with a empty list", () => {
-        //     let sut: TodoService;
-        //     let actualTodos: TodoModel[];
-        //     beforeEach(() => {
-        //         sut = new TodoService();
-        //         actualTodos = sut.getAll();
-        //     });
-        //     it("should return an empty list", () => {
-        //         expect(actualTodos).to.be.empty;
-        //     });
-        // });
+        describe("with a empty list", () => {
+            it("should return an empty list", async () => {
+                const response = await agent.default(settings.application)
+                    .get("/todo")
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(200);
+                const actualTodos = response.body as TodoModel[];
+                expect(actualTodos).to.be.empty;
+            });
+        });
+    });
+    describe("getOne", () => {
+        describe("with a populated list", () => {
+            let expectedTodo: TodoModel;
+            let actualTodo: TodoModel;
+            before(async () => {
+                const todo = {
+                    completed: false,
+                    name: "Clean bathroom"
+                } as TodoModel;
+                const response = await agent.default(settings.application)
+                    .post("/todo")
+                    .send(todo)
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(200);
+                expectedTodo = response.body as TodoModel;
+            });
+            after(async () => {
+                await agent.default(settings.application)
+                    .delete("/todo/" + expectedTodo.id)
+                    .set("Accept", "application/json")
+                    .expect(204);
+            });
+            it("should return a matching todo", async () => {
+                const response = await agent.default(settings.application)
+                    .get("/todo/" + expectedTodo.id)
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(200);
+                actualTodo = response.body as TodoModel;
+                expect(expectedTodo.id).to.equal(actualTodo.id);
+                expect(expectedTodo.name).to.equal(actualTodo.name);
+                expect(expectedTodo.completed).to.equal(actualTodo.completed);
+            });
+        });
+
+        describe("with a empty list", () => {
+            it("should return 404", async () => {
+                await agent.default(settings.application)
+                    .get("/todo/" + 1)
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(404);
+            });
+        });
+    });
+    describe("create", () => {
+        let expectedTodo: TodoModel;
+        let actualTodo: TodoModel;
+        after(async () => {
+            await agent.default(settings.application)
+                .delete("/todo/" + actualTodo.id)
+                .set("Accept", "application/json")
+                .expect(204);
+        });
+        it("should create a matching todo", async () => {
+            expectedTodo = {
+                completed: false,
+                name: "Clean bathroom"
+            } as TodoModel;
+            const response = await agent.default(settings.application)
+                .post("/todo")
+                .send(expectedTodo)
+                .set("Accept", "application/json")
+                .expect("Content-Type", /json/)
+                .expect(200);
+            actualTodo = response.body as TodoModel;
+            expect(expectedTodo.name).to.equal(actualTodo.name);
+            expect(expectedTodo.completed).to.equal(actualTodo.completed);
+            expect(actualTodo.id).to.not.be.null;
+        });
+        it("should return 400 when todo model is invalid", async () => {
+            expectedTodo = {
+                completed: false
+            } as TodoModel;
+            const response = await agent.default(settings.application)
+                .post("/todo")
+                .send(expectedTodo)
+                .set("Accept", "application/json")
+                .expect("Content-Type", /json/)
+                .expect(400);
+        });
+    });
+    describe("update", () => {
+        describe("with a populated list", () => {
+            let expectedTodo: TodoModel;
+            let actualTodo: TodoModel;
+            before(async () => {
+                const todo = {
+                    completed: false,
+                    name: "Clean bathroom"
+                } as TodoModel;
+                const response = await agent.default(settings.application)
+                    .post("/todo")
+                    .send(todo)
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(200);
+                expectedTodo = response.body as TodoModel;
+            });
+            after(async () => {
+                await agent.default(settings.application)
+                    .delete("/todo/" + expectedTodo.id)
+                    .set("Accept", "application/json")
+                    .expect(204);
+            });
+            it("should update todo in list", async () => {
+                expectedTodo.completed = true;
+                expectedTodo.name = "Clean kitchen";
+                await agent.default(settings.application)
+                    .put("/todo/" + expectedTodo.id)
+                    .send(expectedTodo)
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(200);
+                const response = await agent.default(settings.application)
+                    .get("/todo/" + expectedTodo.id)
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(200);
+                actualTodo = response.body as TodoModel;
+                expect(expectedTodo.id).to.equal(actualTodo.id);
+                expect(expectedTodo.name).to.equal(actualTodo.name);
+                expect(expectedTodo.completed).to.equal(actualTodo.completed);
+            });
+        });
+    });
+    describe("delete", () => {
+        describe("with a populated list", () => {
+            let expectedTodo: TodoModel;
+            before(async () => {
+                const todo = {
+                    completed: false,
+                    name: "Clean bathroom"
+                } as TodoModel;
+                const response = await agent.default(settings.application)
+                    .post("/todo")
+                    .send(todo)
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(200);
+                expectedTodo = response.body as TodoModel;
+            });
+            it("should remove todo in list", async () => {
+                await agent.default(settings.application)
+                    .delete("/todo/" + expectedTodo.id)
+                    .set("Accept", "application/json")
+                    .expect(204);
+                await agent.default(settings.application)
+                    .get("/todo/" + expectedTodo.id)
+                    .set("Accept", "application/json")
+                    .expect("Content-Type", /json/)
+                    .expect(404);
+            });
+        });
     });
 });

@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { beforeEach, describe, it } from "mocha";
 import { TodoModel, TodoService } from "../../../application";
 describe("TodoService", () => {
-
     describe("getAll", () => {
         describe("with a populated list", () => {
             let sut: TodoService;
@@ -113,18 +112,6 @@ describe("TodoService", () => {
             });
             it("should update todo in list", () => {
                 expect(expectedTodo).to.equal(actualTodo);
-            });
-        });
-
-        describe("with a empty list", () => {
-            let sut: TodoService;
-            let actualTodos: TodoModel[];
-            beforeEach(() => {
-                sut = new TodoService();
-                actualTodos = sut.getAll();
-            });
-            it("should not change the list", () => {
-                expect(actualTodos).to.be.empty;
             });
         });
     });
