@@ -1,14 +1,18 @@
-import { expect } from "chai";
-import { before } from "mocha";
-import * as agent from "supertest";
-import { TodoModel } from "../../../application";
-import { bootstrapApp, IBootstrapSettings } from "../utils";
+import {expect} from "chai";
+import {before, describe} from "mocha";
+import {agent} from "supertest";
+import {TodoModel} from "../../../application";
+import {bootstrapApp, IBootstrapSettings} from "../utils";
+
 describe("TodoController", async () => {
     let settings: IBootstrapSettings;
     before(async () => {
         settings = await bootstrapApp();
     });
-    describe("getAll", () => {
+    after((done) => {
+        settings.server.close(done);
+    });
+    describe("getAll", async () => {
         describe("with a populated list", async () => {
             const expectedTodos: TodoModel[] = [];
             let actualTodos: TodoModel[];
@@ -24,7 +28,7 @@ describe("TodoController", async () => {
                     } as TodoModel,
                 ];
                 todos.forEach(async (todo) => {
-                    const response = await agent.default(settings.application)
+                    const response = await agent(settings.application)
                         .post("/todo")
                         .send(todo)
                         .set("Accept", "application/json")
@@ -35,14 +39,14 @@ describe("TodoController", async () => {
             });
             after(async () => {
                 expectedTodos.forEach(async (todo) => {
-                    await agent.default(settings.application)
+                    await agent(settings.application)
                         .delete("/todo/" + todo.id)
                         .set("Accept", "application/json")
                         .expect(204);
                 });
             });
             it("responds with the expected records", async () => {
-                const response = await agent.default(settings.application)
+                const response = await agent(settings.application)
                     .get("/todo")
                     .set("Accept", "application/json")
                     .expect("Content-Type", /json/)
@@ -59,7 +63,7 @@ describe("TodoController", async () => {
         });
         describe("with a empty list", () => {
             it("should return an empty list", async () => {
-                const response = await agent.default(settings.application)
+                const response = await agent(settings.application)
                     .get("/todo")
                     .set("Accept", "application/json")
                     .expect("Content-Type", /json/)
@@ -78,7 +82,7 @@ describe("TodoController", async () => {
                     completed: false,
                     name: "Clean bathroom"
                 } as TodoModel;
-                const response = await agent.default(settings.application)
+                const response = await agent(settings.application)
                     .post("/todo")
                     .send(todo)
                     .set("Accept", "application/json")
@@ -87,13 +91,13 @@ describe("TodoController", async () => {
                 expectedTodo = response.body as TodoModel;
             });
             after(async () => {
-                await agent.default(settings.application)
+                await agent(settings.application)
                     .delete("/todo/" + expectedTodo.id)
                     .set("Accept", "application/json")
                     .expect(204);
             });
             it("should return a matching todo", async () => {
-                const response = await agent.default(settings.application)
+                const response = await agent(settings.application)
                     .get("/todo/" + expectedTodo.id)
                     .set("Accept", "application/json")
                     .expect("Content-Type", /json/)
@@ -107,7 +111,7 @@ describe("TodoController", async () => {
 
         describe("with a empty list", () => {
             it("should return 404", async () => {
-                await agent.default(settings.application)
+                await agent(settings.application)
                     .get("/todo/" + 1)
                     .set("Accept", "application/json")
                     .expect("Content-Type", /json/)
@@ -119,7 +123,7 @@ describe("TodoController", async () => {
         let expectedTodo: TodoModel;
         let actualTodo: TodoModel;
         after(async () => {
-            await agent.default(settings.application)
+            await agent(settings.application)
                 .delete("/todo/" + actualTodo.id)
                 .set("Accept", "application/json")
                 .expect(204);
@@ -129,7 +133,7 @@ describe("TodoController", async () => {
                 completed: false,
                 name: "Clean bathroom"
             } as TodoModel;
-            const response = await agent.default(settings.application)
+            const response = await agent(settings.application)
                 .post("/todo")
                 .send(expectedTodo)
                 .set("Accept", "application/json")
@@ -144,7 +148,7 @@ describe("TodoController", async () => {
             expectedTodo = {
                 completed: false
             } as TodoModel;
-            const response = await agent.default(settings.application)
+            await agent(settings.application)
                 .post("/todo")
                 .send(expectedTodo)
                 .set("Accept", "application/json")
@@ -161,7 +165,7 @@ describe("TodoController", async () => {
                     completed: false,
                     name: "Clean bathroom"
                 } as TodoModel;
-                const response = await agent.default(settings.application)
+                const response = await agent(settings.application)
                     .post("/todo")
                     .send(todo)
                     .set("Accept", "application/json")
@@ -170,7 +174,7 @@ describe("TodoController", async () => {
                 expectedTodo = response.body as TodoModel;
             });
             after(async () => {
-                await agent.default(settings.application)
+                await agent(settings.application)
                     .delete("/todo/" + expectedTodo.id)
                     .set("Accept", "application/json")
                     .expect(204);
@@ -178,13 +182,13 @@ describe("TodoController", async () => {
             it("should update todo in list", async () => {
                 expectedTodo.completed = true;
                 expectedTodo.name = "Clean kitchen";
-                await agent.default(settings.application)
+                await agent(settings.application)
                     .put("/todo/" + expectedTodo.id)
                     .send(expectedTodo)
                     .set("Accept", "application/json")
                     .expect("Content-Type", /json/)
                     .expect(200);
-                const response = await agent.default(settings.application)
+                const response = await agent(settings.application)
                     .get("/todo/" + expectedTodo.id)
                     .set("Accept", "application/json")
                     .expect("Content-Type", /json/)
@@ -204,7 +208,7 @@ describe("TodoController", async () => {
                     completed: false,
                     name: "Clean bathroom"
                 } as TodoModel;
-                const response = await agent.default(settings.application)
+                const response = await agent(settings.application)
                     .post("/todo")
                     .send(todo)
                     .set("Accept", "application/json")
@@ -213,11 +217,11 @@ describe("TodoController", async () => {
                 expectedTodo = response.body as TodoModel;
             });
             it("should remove todo in list", async () => {
-                await agent.default(settings.application)
+                await agent(settings.application)
                     .delete("/todo/" + expectedTodo.id)
                     .set("Accept", "application/json")
                     .expect(204);
-                await agent.default(settings.application)
+                await agent(settings.application)
                     .get("/todo/" + expectedTodo.id)
                     .set("Accept", "application/json")
                     .expect("Content-Type", /json/)
